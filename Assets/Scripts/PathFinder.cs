@@ -20,7 +20,7 @@ public class Node
     }
 }
 
-public class PathFinder
+public class PathFinder : MonoBehaviour
 {
     List<Node> TODOList = new List<Node>();
     List<Node> DoneList = new List<Node>();
@@ -58,7 +58,34 @@ public class PathFinder
             // You just need to fill code inside this foreach only
             foreach (Tile nextTile in current.tile.Adjacents)
             {
-                
+                // Make a new Node for the nextTile if it is not already in TODO list
+                Node nextNode = TODOList.Find(n => n.tile == nextTile);
+                if (nextNode == null)
+                {
+                    nextNode = new Node(nextTile, 0, null, 0);
+                }
+                // ignore if not walkable or is on DONE list
+                if (!DoneList.Contains(nextNode) && nextTile.mapTile.Walkable)
+                {
+                    if (!TODOList.Contains(nextNode))
+                    {
+                        // if not on TODO list, add to list. Make current square parent of this square. Record F and G costs.
+                        nextNode.cameFrom = current;
+                        nextNode.costSoFar = current.costSoFar + 10;
+                        nextNode.priority = nextNode.costSoFar + HeuristicsDistance(nextTile, goal);
+                        TODOList.Add(nextNode);
+                    }
+                    else
+                    {
+                        // if on TODO list, check if this path to that square has smaller G cost. If so, change parent square to current square and recalculate G and F.
+                        if (current.costSoFar + 10 < nextNode.costSoFar)
+                        {
+                            nextNode.cameFrom = current;
+                            nextNode.costSoFar = current.costSoFar + 10;
+                            nextNode.priority = nextNode.costSoFar + HeuristicsDistance(nextTile, goal);
+                        }
+                    }
+                }
             }
         }
         return new Queue<Tile>(); // Returns an empty Path if no path is found
