@@ -65,7 +65,7 @@ public class PathFinder : MonoBehaviour
                     nextNode = new Node(nextTile, 0, null, 0);
                 }
                 // ignore if not walkable or is on DONE list
-                if (!DoneList.Contains(nextNode) && nextTile.mapTile.Walkable)
+                if (!DoneList.Contains(nextNode) && nextTile.isPassable)
                 {
                     if (!TODOList.Contains(nextNode))
                     {

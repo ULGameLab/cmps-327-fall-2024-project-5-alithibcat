@@ -135,22 +135,18 @@ public class Enemy : MonoBehaviour
         {
             case EnemyState.DEFAULT: // generate random path 
 
-                // If player is within vision distance, find path to player and set state to CHASE
+                // If player is within vision distance, CHASE
                 if (Vector3.Distance(transform.position, playerGameObject.transform.position) <= visionDistance)
                 {
-                    //Changed the color to red to denote chasing action
-                    material.color = Color.red;
-                    targetTile = playerGameObject.GetComponent<Player>().currentTile;
-                    path = pathFinder.FindPathAStar(currentTile, targetTile);
                     state = EnemyState.CHASE;
                 }
                 else // Player moves randomly
                 {
                     //Changed the color to white to differentiate from other enemies
                     material.color = Color.cyan;
-
+                    // If path empty, populate it randomly
                     if (path.Count <= 0) path = pathFinder.RandomPath(currentTile, 20);
-
+                    // If path has tile in queue, move to that tile
                     if (path.Count > 0)
                     {
                         targetTile = path.Dequeue();
@@ -173,27 +169,22 @@ public class Enemy : MonoBehaviour
                 break;
 
             case EnemyState.CHASE:
-                // If player is still within visionDistance, update target to player's last position
-                if (Vector3.Distance(transform.position, playerGameObject.transform.position) <= visionDistance)
+                //Changed the color to red to denote chasing action
+                material.color = Color.red;
+                // If path is empty, populate it with path to Player tile
+                if (path.Count <= 0) path = pathFinder.FindPathAStar(currentTile, playerGameObject.GetComponent<Player>().currentTile);
+                // If path has a tile in queue, move to that tile
+                if (path.Count > 0)
                 {
-                    targetTile = playerGameObject.GetComponent<Player>().currentTile;
-                    path = pathFinder.FindPathAStar(currentTile, targetTile);
-
-                    //move
-                    velocity = targetTile.gameObject.transform.position - transform.position;
-                    transform.position = transform.position + (velocity.normalized * speed) * Time.deltaTime;
-
-                    //if target reached
-                    if (Vector3.Distance(transform.position, targetTile.gameObject.transform.position) <= 0.05f)
-                    {
-                        currentTile = targetTile;
-                        state = EnemyState.DEFAULT;
-                    }
+                    targetTile = path.Dequeue();
+                    state = EnemyState.MOVING;
                 }
-                else // If player out of range, switch back to random movement
-                {
-                    state = EnemyState.DEFAULT;
-                }
+
+                // If player out of range, switch back to random movement
+                //if (Vector3.Distance(transform.position, playerGameObject.transform.position) > visionDistance)
+                //{
+                //    state = EnemyState.DEFAULT;
+                //}
                 break;
             default:
                 state = EnemyState.DEFAULT;
@@ -208,40 +199,18 @@ public class Enemy : MonoBehaviour
         {
             case EnemyState.DEFAULT: // generate random path 
 
-                // If player is within vision distance, find path to player and set state to CHASE
+                // If player is within vision distance, CHASE
                 if (Vector3.Distance(transform.position, playerGameObject.transform.position) <= visionDistance)
                 {
-                    //Changed the color to red to denote chasing action
-                    material.color = Color.red;
-                   
-                    //int ran = Random.Range(0, 8);
-                    // Instead of finding a random adjacent-adjacent tile, just get first two adjacent tiles that are walkable
-                    foreach (Tile t in playerGameObject.GetComponent<Player>().currentTile.Adjacents)
-                    {
-                        if (t.mapTile.Walkable)
-                        {
-                            targetTile = t;
-                            break;
-                        }
-                    }
-                    foreach (Tile t in playerGameObject.GetComponent<Player>().currentTile.Adjacents)
-                    {
-                        if (t.mapTile.Walkable)
-                        {
-                            targetTile = t;
-                            break;
-                        }
-                    }
-                    path = pathFinder.FindPathAStar(currentTile, targetTile);
                     state = EnemyState.CHASE;
                 }
                 else // Player moves randomly
                 {
                     //Changed the color to white to differentiate from other enemies
                     material.color = Color.magenta;
-
+                    // If path empty, populate it randomly
                     if (path.Count <= 0) path = pathFinder.RandomPath(currentTile, 20);
-
+                    // If path has tile in queue, move to that tile
                     if (path.Count > 0)
                     {
                         targetTile = path.Dequeue();
@@ -264,14 +233,16 @@ public class Enemy : MonoBehaviour
                 break;
 
             case EnemyState.CHASE:
-                // If player is still within visionDistance, update target to player's last position
-                if (Vector3.Distance(transform.position, playerGameObject.transform.position) <= visionDistance)
+                //Changed the color to red to denote chasing action
+                material.color = Color.red;
+                
+                // If path empty, populate it with path adjacent to Player tile
+                if (path.Count <= 0)
                 {
-                    //int ran = Random.Range(0, 8);
                     // Instead of finding a random adjacent-adjacent tile, just get first two adjacent tiles that are walkable
                     foreach (Tile t in playerGameObject.GetComponent<Player>().currentTile.Adjacents)
                     {
-                        if (t.mapTile.Walkable)
+                        if (t.isPassable)
                         {
                             targetTile = t;
                             break;
@@ -279,29 +250,26 @@ public class Enemy : MonoBehaviour
                     }
                     foreach (Tile t in playerGameObject.GetComponent<Player>().currentTile.Adjacents)
                     {
-                        if (t.mapTile.Walkable)
+                        if (t.isPassable)
                         {
                             targetTile = t;
                             break;
                         }
                     }
                     path = pathFinder.FindPathAStar(currentTile, targetTile);
-
-                    //move
-                    velocity = targetTile.gameObject.transform.position - transform.position;
-                    transform.position = transform.position + (velocity.normalized * speed) * Time.deltaTime;
-
-                    //if target reached
-                    if (Vector3.Distance(transform.position, targetTile.gameObject.transform.position) <= 0.05f)
-                    {
-                        currentTile = targetTile;
-                        state = EnemyState.DEFAULT;
-                    }
                 }
-                else // If player out of range, switch back to random movement
+                // If path has tile in queue, move to that tile
+                if (path.Count > 0)
                 {
-                    state = EnemyState.DEFAULT;
+                    targetTile = path.Dequeue();
+                    state = EnemyState.MOVING;
                 }
+
+                // If out of range, go back to default
+                //if (Vector3.Distance(transform.position, playerGameObject.transform.position) > visionDistance) // If player out of range, switch back to random movement
+                //{
+                //    state = EnemyState.DEFAULT;
+                //}
                 break;
             default:
                 state = EnemyState.DEFAULT;
